@@ -5,16 +5,18 @@
     "icon": "https://icons.duckduckgo.com/ip3/adoremont.com.ico",
     "slug": "adoremont-api",
     "status": "down",
-    "uptime": "100.00%",
-    "uptimeDay": "100.00%",
-    "uptimeWeek": "100.00%",
-    "uptimeMonth": "100.00%",
-    "uptimeYear": "100.00%",
+    "uptime": "99.97%",
+    "uptimeDay": "99.97%",
+    "uptimeWeek": "99.97%",
+    "uptimeMonth": "99.97%",
+    "uptimeYear": "99.97%",
     "time": 1040,
     "timeDay": 1040,
     "timeWeek": 1040,
     "timeMonth": 1040,
     "timeYear": 1040,
-    "dailyMinutesDown": {}
+    "dailyMinutesDown": {
+      "2025-06-16": 0
+    }
   }
 ]
