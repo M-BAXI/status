@@ -1,14 +1,14 @@
-owner: your-github-username
+owner: M-BAXI
 repo: status
 
 sites:
-  - name: adoremont 后端接口
+  - name: Adoremont API
     url: https://adoremont.com/api/health
     expectStatus: 200
     maxResponseTime: 3000
 
 status-website:
   cname: status.adoremont.com
-  name: Adoremont 服务状态
-  introTitle: "Adoremont 服务状态页"
+  name: Adoremont 服务状态页
+  introTitle: "**Adoremont 服务状态页**"
   introMessage: 本页面展示 adoremont.com 各服务运行状态和响应时间。
