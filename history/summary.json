@@ -1,20 +1,20 @@
 [
   {
-    "name": "adoremont 后端接口",
+    "name": "Adoremont API",
     "url": "https://adoremont.com/api/health",
     "icon": "https://icons.duckduckgo.com/ip3/adoremont.com.ico",
-    "slug": "adoremont",
+    "slug": "adoremont-api",
     "status": "up",
     "uptime": "100.00%",
     "uptimeDay": "100.00%",
     "uptimeWeek": "100.00%",
     "uptimeMonth": "100.00%",
     "uptimeYear": "100.00%",
-    "time": 1115,
-    "timeDay": 1115,
-    "timeWeek": 1115,
-    "timeMonth": 1115,
-    "timeYear": 1115,
+    "time": 0,
+    "timeDay": 0,
+    "timeWeek": 0,
+    "timeMonth": 0,
+    "timeYear": 0,
     "dailyMinutesDown": {}
   }
 ]
