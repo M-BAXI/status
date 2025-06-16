@@ -4,19 +4,19 @@
     "url": "https://adoremont.com/api/health",
     "icon": "https://icons.duckduckgo.com/ip3/adoremont.com.ico",
     "slug": "adoremont-api",
-    "status": "down",
-    "uptime": "99.62%",
-    "uptimeDay": "99.62%",
-    "uptimeWeek": "99.62%",
-    "uptimeMonth": "99.62%",
-    "uptimeYear": "99.62%",
-    "time": 1033,
-    "timeDay": 1033,
-    "timeWeek": 1033,
-    "timeMonth": 1033,
-    "timeYear": 1033,
+    "status": "up",
+    "uptime": "99.76%",
+    "uptimeDay": "99.76%",
+    "uptimeWeek": "99.76%",
+    "uptimeMonth": "99.76%",
+    "uptimeYear": "99.76%",
+    "time": 1052,
+    "timeDay": 1052,
+    "timeWeek": 1052,
+    "timeMonth": 1052,
+    "timeYear": 1052,
     "dailyMinutesDown": {
-      "2025-06-16": 3
+      "2025-06-16": 2
     }
   }
 ]
