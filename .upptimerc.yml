@@ -7,6 +7,8 @@ sites:
     expectStatus: 200
     maxResponseTime: 3000
 
+checkInterval: 60
+
 status-website:
   cname: status.adoremont.com
   name: Adoremont 服务状态页
