@@ -1,0 +1,34 @@
+# .github/workflows/add-incident-comment.yml
+name: Add incident comment with debug logs
+
+on:
+  issues:
+    types:
+      - opened
+
+jobs:
+  comment-with-debug-log:
+    if: github.event.issue.title contains 'Down:'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Get debug logs (replace with your script)
+        run: |
+          echo "Fetching sample debug log..."
+          echo "[INFO] Example log entry 1" > log.txt
+          echo "[ERROR] Something failed at $(date)" >> log.txt
+
+      - name: Add comment to issue
+        uses: peter-evans/create-or-update-comment@v3
+        with:
+          issue-number: ${{ github.event.issue.number }}
+          body: |
+            🚨 自动排查日志：
+
+            ```
+            $(cat log.txt)
+            ```
+
+            📌 本条为自动注释，如需手动补充说明，请在下方评论。
