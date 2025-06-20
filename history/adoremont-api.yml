@@ -1,7 +1,7 @@
 url: https://adoremont.com/api/health
-status: degraded
+status: down
 code: 502
-responseTime: 6205
-lastUpdated: 2025-06-20T14:39:20.366Z
+responseTime: 817
+lastUpdated: 2025-06-20T14:52:05.296Z
 startTime: 2025-06-16T05:30:17.248Z
 generator: Upptime <https://github.com/upptime/upptime>
