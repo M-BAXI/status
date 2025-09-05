@@ -1,7 +1,7 @@
 url: https://adoremont.com/api/health
-status: down
-code: 0
-responseTime: 0
-lastUpdated: 2025-09-05T00:58:03.692Z
+status: up
+code: 200
+responseTime: 1005
+lastUpdated: 2025-09-05T02:25:29.269Z
 startTime: 2025-06-16T05:30:17.248Z
 generator: Upptime <https://github.com/upptime/upptime>
