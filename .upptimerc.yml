@@ -6,7 +6,7 @@ sites:
     url: https://adoremont.com/api/health
     expectStatus: 200
     maxResponseTime: 3000
-    - name: Adoremontbacksystem API
+  - name: Adoremontbacksystem API
     url: https://backapi.adoremont.com/api/v1/health
     expectStatus: 200
     maxResponseTime: 3000
