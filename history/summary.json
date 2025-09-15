@@ -4,10 +4,10 @@
     "url": "https://adoremont.com/api/health",
     "icon": "https://icons.duckduckgo.com/ip3/adoremont.com.ico",
     "slug": "adoremont-api",
-    "status": "up",
+    "status": "down",
     "uptime": "99.75%",
-    "uptimeDay": "100.00%",
-    "uptimeWeek": "100.00%",
+    "uptimeDay": "99.92%",
+    "uptimeWeek": "99.99%",
     "uptimeMonth": "99.69%",
     "uptimeYear": "99.75%",
     "time": 1156,
@@ -16,6 +16,7 @@
     "timeMonth": 1164,
     "timeYear": 1156,
     "dailyMinutesDown": {
+      "2025-09-15": 1,
       "2025-09-05": 70,
       "2025-08-19": 64,
       "2025-06-21": 10,
@@ -28,35 +29,39 @@
     "url": "https://backapi.adoremont.com/api/v1/health",
     "icon": "https://icons.duckduckgo.com/ip3/backapi.adoremont.com.ico",
     "slug": "adoremontbacksystem-api",
-    "status": "up",
-    "uptime": "100.00%",
-    "uptimeDay": "100.00%",
-    "uptimeWeek": "100.00%",
-    "uptimeMonth": "100.00%",
-    "uptimeYear": "100.00%",
+    "status": "down",
+    "uptime": "99.94%",
+    "uptimeDay": "99.94%",
+    "uptimeWeek": "99.94%",
+    "uptimeMonth": "99.94%",
+    "uptimeYear": "99.94%",
     "time": 1102,
     "timeDay": 1102,
     "timeWeek": 1102,
     "timeMonth": 1102,
     "timeYear": 1102,
-    "dailyMinutesDown": {}
+    "dailyMinutesDown": {
+      "2025-09-15": 1
+    }
   },
   {
     "name": "Adoremontbacksystem Fountend",
     "url": "https://back.adoremont.com/",
     "icon": "https://icons.duckduckgo.com/ip3/back.adoremont.com.ico",
     "slug": "adoremontbacksystem-fountend",
-    "status": "up",
-    "uptime": "100.00%",
-    "uptimeDay": "100.00%",
-    "uptimeWeek": "100.00%",
-    "uptimeMonth": "100.00%",
-    "uptimeYear": "100.00%",
+    "status": "down",
+    "uptime": "99.97%",
+    "uptimeDay": "99.97%",
+    "uptimeWeek": "99.97%",
+    "uptimeMonth": "99.97%",
+    "uptimeYear": "99.97%",
     "time": 2080,
     "timeDay": 2080,
     "timeWeek": 2080,
     "timeMonth": 2080,
     "timeYear": 2080,
-    "dailyMinutesDown": {}
+    "dailyMinutesDown": {
+      "2025-09-15": 0
+    }
   }
 ]
