@@ -10,6 +10,10 @@ sites:
     url: https://backapi.adoremont.com/api/v1/health
     expectStatus: 200
     maxResponseTime: 3000
+  - name: Adoremontbacksystem Fountend
+    url: https://back.adoremont.com/
+    expectStatus: 200
+    maxResponseTime: 3000
 
 checkInterval: 10
 
