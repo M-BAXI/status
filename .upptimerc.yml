@@ -11,7 +11,7 @@ sites:
     expectStatus: 200
     maxResponseTime: 3000
 
-checkInterval: 30
+checkInterval: 10
 
 status-website:
   cname: status.adoremont.com
