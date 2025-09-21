@@ -1,12 +1,9 @@
-name: Send Maintenance Email
+name: Maintenance Email Notifications
 
 on:
-  push:
-    paths:
-      - '.upptimerc.yml'   # 维护配置变更时触发（可留可删）
   issues:
-    types: [opened, edited, reopened]   # 新建/编辑维护 Issue 时触发
-  workflow_dispatch:                     # 支持手动触发
+    types: [opened, edited, reopened, closed, labeled]
+  workflow_dispatch:
 
 permissions:
   contents: read
@@ -14,89 +11,121 @@ permissions:
 
 jobs:
   send-email:
+    if: startsWith(github.event.issue.title, '[Scheduled Maintenance]')
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
 
-      # 读取最新一条标题以 "[Scheduled Maintenance]" 开头的开放状态 Issue
-      - name: Extract maintenance info from issue
+      - name: Extract maintenance info (with extension detection)
         id: maint
         uses: actions/github-script@v7
         with:
           script: |
-            const { owner, repo } = context.repo;
-
-            // 拉取最近 20 条 open issues，找标题前缀匹配的
-            const { data: issues } = await github.rest.issues.listForRepo({
-              owner, repo, state: "open", per_page: 20, sort: "created", direction: "desc",
-            });
-
-            const target = issues.find(i => i.title?.startsWith("[Scheduled Maintenance]"));
-            if (!target) {
-              core.setFailed("未找到标题以 [Scheduled Maintenance] 开头的开放 Issue。");
-              return;
-            }
-
-            const body = target.body || "";
-
-            // 解析注释块中的键值
-            const commentBlockMatch = body.match(/<!--([\s\S]*?)-->/);
-            const kv = { start: "", end: "", expectedDown: "", expectedDegraded: "" };
-            if (commentBlockMatch) {
-              const lines = commentBlockMatch[1].split("\n");
-              for (const line of lines) {
-                const m = line.match(/^\s*([a-zA-Z]+)\s*:\s*(.+?)\s*$/);
-                if (!m) continue;
-                const key = m[1];
-                const val = m[2];
-                if (kv.hasOwnProperty(key)) kv[key] = val;
+            const parseKV = (text) => {
+              const m = (text || "").match(/<!--([\s\S]*?)-->/);
+              const kv = { start: "", end: "", expectedDown: "", expectedDegraded: "" };
+              if (!m) return kv;
+              for (const line of m[1].split("\n")) {
+                const mm = line.match(/^\s*([a-zA-Z]+)\s*:\s*(.+?)\s*$/);
+                if (!mm) continue;
+                const k = mm[1], v = mm[2];
+                if (kv.hasOwnProperty(k)) kv[k] = v;
               }
-            }
+              return kv;
+            };
 
-            // 注释块外的正文；若含 **Additional context**，优先取其后的内容
+            const normList = (s) =>
+              (s || "").split(/[,\n]/).map(x => x.trim()).filter(Boolean);
+
+            const body      = github.event.issue.body || "";
+            const newKV     = parseKV(body);
+            const oldBody   = github.event.changes?.body?.from || "";
+            const oldKV     = parseKV(oldBody);
+
+            // 可见正文（取 **Additional context** 段落之后）
             let visible = body.replace(/<!--[\s\S]*?-->/g, "").trim();
             const ctxMatch = visible.match(/\*\*Additional context\*\*([\s\S]*)$/i);
             const contextText = (ctxMatch ? ctxMatch[1] : visible).trim();
 
-            const normList = (s) => (s || "")
-              .split(/[,\n]/)
-              .map(x => x.trim())
-              .filter(Boolean);
+            // 受影响服务
+            const downList     = normList(newKV.expectedDown);
+            const degradedList = normList(newKV.expectedDegraded);
 
-            const downList = normList(kv.expectedDown);
-            const degradedList = normList(kv.expectedDegraded);
+            // 判定模式
+            let mode = "start";           // start | extended_changed | extended_label | finished
+            let previousEnd = "";
+            const action = github.event.action;
 
-            core.setOutput("issue_title", target.title);
-            core.setOutput("start", kv.start);
-            core.setOutput("end", kv.end);
-            core.setOutput("down", downList.join(", "));
-            core.setOutput("degraded", degradedList.join(", "));
-            core.setOutput("context", contextText);
+            if (action === "closed") {
+              mode = "finished";
+            } else if (action === "edited") {
+              if (newKV.end && oldKV.end && newKV.end !== oldKV.end) {
+                mode = "extended_changed";
+                previousEnd = oldKV.end;
+              }
+            } else if (action === "labeled") {
+              const lbl = (github.event.label?.name || "").toLowerCase();
+              if (lbl === "extended") mode = "extended_label";
+            }
+
+            // 主题前缀 & 开场说明 & 尾注
+            let subjectPrefix = "🔧 服务系统维护通知";
+            let introLine     = "服务将于以下时间进行维护：";
+            let tailLine      = "如遇不可预计的问题，维护时间将会延长，具体延误时间将另行通知。";
+
+            if (mode === "extended_changed") {
+              subjectPrefix = "⚠️ 维护延长通知";
+              introLine     = `维护时间已延长：原计划结束 ${previousEnd} → 延长至 ${newKV.end}`;
+              tailLine      = "请注意，维护窗口比原计划更长，可能继续影响部分服务。";
+            } else if (mode === "extended_label") {
+              subjectPrefix = "⚠️ 维护延长通知";
+              introLine     = "维护时间已延长，当前延误时长待定：";
+              tailLine      = "我们会在确定新的结束时间后第一时间通知。";
+            } else if (mode === "finished") {
+              subjectPrefix = "✅ 维护完成通知";
+              introLine     = "以下维护任务已完成，服务恢复正常：";
+              tailLine      = "✅ 所有服务已恢复正常运行，感谢理解与配合！";
+            }
+
+            // 输出（含默认值，避免正文空白）
+            core.setOutput("mode", mode);
+            core.setOutput("subject_prefix", subjectPrefix);
+            core.setOutput("intro_line", introLine);
+            core.setOutput("tail_line", tailLine);
+
+            core.setOutput("issue_title", github.event.issue.title);
+            core.setOutput("start", newKV.start || "（未指定）");
+            core.setOutput("end",   newKV.end   || "（未指定）");
+            core.setOutput("prev_end", previousEnd || "（无）");
+            core.setOutput("down",     downList.length ? downList.join(", ") : "无");
+            core.setOutput("degraded", degradedList.length ? degradedList.join(", ") : "无");
+            core.setOutput("context",  contextText || "（无补充说明）");
 
       - name: Send email
         uses: dawidd6/action-send-mail@v3
         with:
           server_address: smtp.163.com
           server_port: 465
-          username: ${{ secrets.SMTP_USER }}     # 例如：adoremont@163.com
-          password: ${{ secrets.SMTP_PASS }}     # 163 邮箱的客户端授权码
-          subject: "服务系统维护通知｜${{ steps.maint.outputs.issue_title }}"
+          username: ${{ secrets.SMTP_USER }}
+          password: ${{ secrets.SMTP_PASS }}
           to: "bryanyijies@qq.com"
           from: "Adoremont IT Service <${{ secrets.SMTP_USER }}>"
+          subject: "${{ steps.maint.outputs.subject_prefix }}｜${{ steps.maint.outputs.issue_title }}"
           body: |
             各位好，
 
-            服务将于以下时间进行维护：
+            ${{ steps.maint.outputs.intro_line }}
 
             标题：${{ steps.maint.outputs.issue_title }}
             开始：${{ steps.maint.outputs.start }}
             结束：${{ steps.maint.outputs.end }}
+            ${{ steps.maint.outputs.mode == 'extended_changed' && format('原计划结束：{0}', steps.maint.outputs.prev_end) || '' }}
 
             受影响服务：
-            - 预计不可用（down）：${{ steps.maint.outputs.down || '无' }}
-            - 预计降级（degraded）：${{ steps.maint.outputs.degraded || '无' }}
+            - 预计不可用（down）：${{ steps.maint.outputs.down }}
+            - 预计降级（degraded）：${{ steps.maint.outputs.degraded }}
 
             维护说明：
-            ${{ steps.maint.outputs.context || '（无补充说明）' }}
+            ${{ steps.maint.outputs.context }}
 
-            如遇不可预计的问题，维护时间将会延长，具体延误时间将另行通知。
+            ${{ steps.maint.outputs.tail_line }}
