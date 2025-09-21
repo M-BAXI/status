@@ -21,4 +21,6 @@ status-website:
   cname: status.adoremont.com
   name: Adoremont 服务状态页
   introTitle: "**Adoremont 服务状态页**"
+  timezone: "Asia/Shanghai"
   introMessage: 本页面展示 adoremont.com 各服务运行状态和响应时间。
+  
