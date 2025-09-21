@@ -80,20 +80,20 @@ jobs:
             // 邮件模板文本
             let subjectPrefix = "🔧 服务系统维护通知";
             let introLine     = "服务将于以下时间进行维护：";
-            let tailLine      = "如遇不可预计的问题，维护时间将会延长，具体延误时间将另行通知。";
+            let tailLine      = "如遇不可预计的问题，维护时间将会延长，具体延误时间将另行通知。具体维护信息请前往：https://status.adoremont.com 查看";
 
             if (mode === "extended_changed") {
               subjectPrefix = "⚠️ 维护延长通知";
               introLine     = `维护时间已延长：原计划结束 ${previousEnd} → 延长至 ${newKV.end}`;
-              tailLine      = "请注意，维护窗口比原计划更长，可能继续影响部分服务。";
+              tailLine      = "请注意，维护窗口比原计划更长，可能继续影响部分服务。具体维护信息请前往：https://status.adoremont.com 查看";
             } else if (mode === "extended_label") {
               subjectPrefix = "⚠️ 维护延长通知";
               introLine     = "维护时间已延长，当前延误时长待定：";
-              tailLine      = "我们会在确定新的结束时间后第一时间通知。";
+              tailLine      = "我们会在确定新的结束时间后第一时间通知。具体维护信息请前往：https://status.adoremont.com 查看";
             } else if (mode === "finished") {
               subjectPrefix = "✅ 维护完成通知";
               introLine     = "以下维护任务已完成，服务恢复正常：";
-              tailLine      = "✅ 所有服务已恢复正常运行，感谢理解与配合！";
+              tailLine      = "✅ 所有服务已恢复正常运行，感谢理解与配合！具体维护信息请前往：https://status.adoremont.com 查看";
             }
 
             // 输出
