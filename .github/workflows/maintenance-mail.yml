@@ -11,7 +11,8 @@ permissions:
 
 jobs:
   send-email:
-    if: startsWith(github.event.issue.title, '[Scheduled Maintenance]')
+    # 只在 issues 事件并且标题正确时执行
+    if: github.event.issue && startsWith(github.event.issue.title, '[Scheduled Maintenance]')
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -21,6 +22,16 @@ jobs:
         uses: actions/github-script@v7
         with:
           script: |
+            const payload = context.payload;
+            if (!payload.issue) {
+              core.setFailed("当前触发事件没有 issue 对象，只支持 issues 事件触发。");
+              return;
+            }
+
+            const issue = payload.issue;
+            const body = issue.body || "";
+
+            // 解析 KV 注释块
             const parseKV = (text) => {
               const m = (text || "").match(/<!--([\s\S]*?)-->/);
               const kv = { start: "", end: "", expectedDown: "", expectedDegraded: "" };
@@ -34,27 +45,25 @@ jobs:
               return kv;
             };
 
-            const normList = (s) =>
-              (s || "").split(/[,\n]/).map(x => x.trim()).filter(Boolean);
+            const newKV   = parseKV(body);
+            const oldBody = payload.changes?.body?.from || "";
+            const oldKV   = parseKV(oldBody);
 
-            const body      = github.event.issue.body || "";
-            const newKV     = parseKV(body);
-            const oldBody   = github.event.changes?.body?.from || "";
-            const oldKV     = parseKV(oldBody);
-
-            // 可见正文（取 **Additional context** 段落之后）
+            // 可见正文
             let visible = body.replace(/<!--[\s\S]*?-->/g, "").trim();
             const ctxMatch = visible.match(/\*\*Additional context\*\*([\s\S]*)$/i);
             const contextText = (ctxMatch ? ctxMatch[1] : visible).trim();
 
-            // 受影响服务
+            const normList = (s) =>
+              (s || "").split(/[,\n]/).map(x => x.trim()).filter(Boolean);
+
             const downList     = normList(newKV.expectedDown);
             const degradedList = normList(newKV.expectedDegraded);
 
             // 判定模式
-            let mode = "start";           // start | extended_changed | extended_label | finished
+            let mode = "start"; // start | extended_changed | extended_label | finished
             let previousEnd = "";
-            const action = github.event.action;
+            const action = payload.action;
 
             if (action === "closed") {
               mode = "finished";
@@ -64,11 +73,11 @@ jobs:
                 previousEnd = oldKV.end;
               }
             } else if (action === "labeled") {
-              const lbl = (github.event.label?.name || "").toLowerCase();
+              const lbl = (payload.label?.name || "").toLowerCase();
               if (lbl === "extended") mode = "extended_label";
             }
 
-            // 主题前缀 & 开场说明 & 尾注
+            // 邮件模板文本
             let subjectPrefix = "🔧 服务系统维护通知";
             let introLine     = "服务将于以下时间进行维护：";
             let tailLine      = "如遇不可预计的问题，维护时间将会延长，具体延误时间将另行通知。";
@@ -87,13 +96,13 @@ jobs:
               tailLine      = "✅ 所有服务已恢复正常运行，感谢理解与配合！";
             }
 
-            // 输出（含默认值，避免正文空白）
+            // 输出
             core.setOutput("mode", mode);
             core.setOutput("subject_prefix", subjectPrefix);
             core.setOutput("intro_line", introLine);
             core.setOutput("tail_line", tailLine);
 
-            core.setOutput("issue_title", github.event.issue.title);
+            core.setOutput("issue_title", issue.title);
             core.setOutput("start", newKV.start || "（未指定）");
             core.setOutput("end",   newKV.end   || "（未指定）");
             core.setOutput("prev_end", previousEnd || "（无）");
