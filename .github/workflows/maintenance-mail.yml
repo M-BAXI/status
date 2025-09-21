@@ -81,7 +81,7 @@ jobs:
           username: ${{ secrets.SMTP_USER }}     # 例如：adoremont@163.com
           password: ${{ secrets.SMTP_PASS }}     # 163 邮箱的客户端授权码
           subject: "服务系统维护通知｜${{ steps.maint.outputs.issue_title }}"
-          to: "1249257345@qq.com"
+          to: "lawzhang88@qq.com, bryanyijies@qq.com, 3021484348@qq.com, adoremont@163.com"
           from: "Adoremont IT Service <${{ secrets.SMTP_USER }}>"
           body: |
             各位好，
