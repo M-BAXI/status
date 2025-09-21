@@ -3,8 +3,10 @@ name: Send Maintenance Email
 on:
   push:
     paths:
-      - '.upptimerc.yml'        # 你也可以改成触发 issue 编辑等事件
-  workflow_dispatch:
+      - '.upptimerc.yml'   # 维护配置变更时触发（可留可删）
+  issues:
+    types: [opened, edited, reopened]   # 新建/编辑维护 Issue 时触发
+  workflow_dispatch:                     # 支持手动触发
 
 permissions:
   contents: read
@@ -37,13 +39,7 @@ jobs:
 
             const body = target.body || "";
 
-            // 解析 HTML 注释块内的键值（你提供的模版）
-            // <!--
-            // start: 2025-09-15T12:00:00+08:00
-            // end: 2025-09-15T14:00:00+08:00
-            // expectedDown: Adoremont API
-            // expectedDegraded: Adoremont frontend
-            // -->
+            // 解析注释块中的键值
             const commentBlockMatch = body.match(/<!--([\s\S]*?)-->/);
             const kv = { start: "", end: "", expectedDown: "", expectedDegraded: "" };
             if (commentBlockMatch) {
@@ -57,20 +53,15 @@ jobs:
               }
             }
 
-            // 解析「Additional context」段落（可选）
-            // 取注释块之外的正文作为说明
+            // 注释块外的正文；若含 **Additional context**，优先取其后的内容
             let visible = body.replace(/<!--[\s\S]*?-->/g, "").trim();
-            // 如果正文里有 "**Additional context**" 段，优先提取它下面的内容
             const ctxMatch = visible.match(/\*\*Additional context\*\*([\s\S]*)$/i);
             const contextText = (ctxMatch ? ctxMatch[1] : visible).trim();
 
-            // 规范化列表，支持逗号分隔多个服务
-            function normList(s) {
-              return (s || "")
-                .split(/[,\n]/)
-                .map(x => x.trim())
-                .filter(Boolean);
-            }
+            const normList = (s) => (s || "")
+              .split(/[,\n]/)
+              .map(x => x.trim())
+              .filter(Boolean);
 
             const downList = normList(kv.expectedDown);
             const degradedList = normList(kv.expectedDegraded);
@@ -87,16 +78,15 @@ jobs:
         with:
           server_address: smtp.163.com
           server_port: 465
-          # 用 Secrets，不要把账号密码写死在仓库里！
-          username: ${{ secrets.SMTP_USER }}         # 例如：adoremont@163.com
-          password: ${{ secrets.SMTP_PASS }}         # 163 邮箱客户端授权码
+          username: ${{ secrets.SMTP_USER }}     # 例如：adoremont@163.com
+          password: ${{ secrets.SMTP_PASS }}     # 163 邮箱的客户端授权码
           subject: "服务系统维护通知｜${{ steps.maint.outputs.issue_title }}"
           to: "1249257345@qq.com"
-          from: "Adoremont IT Service <${{ secrets.SMTP_USER }}}>"
+          from: "Adoremont IT Service <${{ secrets.SMTP_USER }}>"
           body: |
             各位好，
 
-            服务将于以下时间进行维护服务：
+            服务将于以下时间进行维护：
 
             标题：${{ steps.maint.outputs.issue_title }}
             开始：${{ steps.maint.outputs.start }}
