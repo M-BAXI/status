@@ -1,0 +1,112 @@
+name: Send Maintenance Email
+
+on:
+  push:
+    paths:
+      - '.upptimerc.yml'        # 你也可以改成触发 issue 编辑等事件
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: read
+
+jobs:
+  send-email:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # 读取最新一条标题以 "[Scheduled Maintenance]" 开头的开放状态 Issue
+      - name: Extract maintenance info from issue
+        id: maint
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const { owner, repo } = context.repo;
+
+            // 拉取最近 20 条 open issues，找标题前缀匹配的
+            const { data: issues } = await github.rest.issues.listForRepo({
+              owner, repo, state: "open", per_page: 20, sort: "created", direction: "desc",
+            });
+
+            const target = issues.find(i => i.title?.startsWith("[Scheduled Maintenance]"));
+            if (!target) {
+              core.setFailed("未找到标题以 [Scheduled Maintenance] 开头的开放 Issue。");
+              return;
+            }
+
+            const body = target.body || "";
+
+            // 解析 HTML 注释块内的键值（你提供的模版）
+            // <!--
+            // start: 2025-09-15T12:00:00+08:00
+            // end: 2025-09-15T14:00:00+08:00
+            // expectedDown: Adoremont API
+            // expectedDegraded: Adoremont frontend
+            // -->
+            const commentBlockMatch = body.match(/<!--([\s\S]*?)-->/);
+            const kv = { start: "", end: "", expectedDown: "", expectedDegraded: "" };
+            if (commentBlockMatch) {
+              const lines = commentBlockMatch[1].split("\n");
+              for (const line of lines) {
+                const m = line.match(/^\s*([a-zA-Z]+)\s*:\s*(.+?)\s*$/);
+                if (!m) continue;
+                const key = m[1];
+                const val = m[2];
+                if (kv.hasOwnProperty(key)) kv[key] = val;
+              }
+            }
+
+            // 解析「Additional context」段落（可选）
+            // 取注释块之外的正文作为说明
+            let visible = body.replace(/<!--[\s\S]*?-->/g, "").trim();
+            // 如果正文里有 "**Additional context**" 段，优先提取它下面的内容
+            const ctxMatch = visible.match(/\*\*Additional context\*\*([\s\S]*)$/i);
+            const contextText = (ctxMatch ? ctxMatch[1] : visible).trim();
+
+            // 规范化列表，支持逗号分隔多个服务
+            function normList(s) {
+              return (s || "")
+                .split(/[,\n]/)
+                .map(x => x.trim())
+                .filter(Boolean);
+            }
+
+            const downList = normList(kv.expectedDown);
+            const degradedList = normList(kv.expectedDegraded);
+
+            core.setOutput("issue_title", target.title);
+            core.setOutput("start", kv.start);
+            core.setOutput("end", kv.end);
+            core.setOutput("down", downList.join(", "));
+            core.setOutput("degraded", degradedList.join(", "));
+            core.setOutput("context", contextText);
+
+      - name: Send email
+        uses: dawidd6/action-send-mail@v3
+        with:
+          server_address: smtp.163.com
+          server_port: 465
+          # 用 Secrets，不要把账号密码写死在仓库里！
+          username: ${{ secrets.SMTP_USER }}         # 例如：adoremont@163.com
+          password: ${{ secrets.SMTP_PASS }}         # 163 邮箱客户端授权码
+          subject: "服务系统维护通知｜${{ steps.maint.outputs.issue_title }}"
+          to: "1249257345@qq.com"
+          from: "Adoremont IT Service <${{ secrets.SMTP_USER }}}>"
+          body: |
+            各位好，
+
+            服务将于以下时间进行维护服务：
+
+            标题：${{ steps.maint.outputs.issue_title }}
+            开始：${{ steps.maint.outputs.start }}
+            结束：${{ steps.maint.outputs.end }}
+
+            受影响服务：
+            - 预计不可用（down）：${{ steps.maint.outputs.down || '无' }}
+            - 预计降级（degraded）：${{ steps.maint.outputs.degraded || '无' }}
+
+            维护说明：
+            ${{ steps.maint.outputs.context || '（无补充说明）' }}
+
+            如遇不可预计的问题，维护时间将会延长，具体延误时间将另行通知。
